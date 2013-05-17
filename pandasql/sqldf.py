@@ -90,7 +90,8 @@ def sqldf(q, env, inmemory=True):
             df_real=pd.DataFrame(df, columns=['c'+str(i) for i in range(first_record_len)])
             _write_table(table, df_real, conn)
         else :
-            raise Exception("%s is not a panda object, a list, nor a dictionary" % table)    try:
+            raise Exception("%s is not a panda object, a list, nor a dictionary" % table)
+    try:
         result = frame_query(q, conn)
     except:
         result = None
