@@ -71,8 +71,26 @@ def sqldf(q, env, inmemory=True):
                 os.remove(dbname)
             raise Exception("%s not found" % table)
         df = env[table]
-        _write_table(table, df, conn)
-    try:
+        if hasattr(df, 'columns') :
+            #standard case : we have a panda frame
+            _write_table(table, df, conn)
+        elif hasattr(df,'items') and hasattr(dict,'keys'):
+            #other case :a dictionnary
+            df_list=[(k,v) for k, v in df.items()]
+            df_real=pd.DataFrame(df_list, columns=['c'+str(i) for i in range(len(df_list[0]))])
+            _write_table(table, df_real, conn)
+        elif hasattr(df,'index') :
+            #other case : we suppose we have a simple python list
+            #we build columns title "Ci" where i is going from 1 to the number of columns-1
+            first_record=df[0]
+            first_record_len=1
+            if hasattr(first_record,'index') and not hasattr(first_record,'upper'):
+                first_record_len=len(df[0])
+                print (first_record_len)
+            df_real=pd.DataFrame(df, columns=['c'+str(i) for i in range(first_record_len)])
+            _write_table(table, df_real, conn)
+        else :
+            raise Exception("%s is not a panda object, a list, nor a dictionary" % table)    try:
         result = frame_query(q, conn)
     except:
         result = None
