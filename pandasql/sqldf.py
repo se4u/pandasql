@@ -112,11 +112,13 @@ def sqldf(q, env, inmemory=True):
     for table_ref in tables:
         table=table_ref[0].replace(":","")+table_ref[1:]
         if table not in env:
-            conn.close()
-            if not inmemory :
-                os.remove(dbname)
-            raise Exception("%s not found" % table)
-        else :
+            #it's a fail only if the table was prefixed as a parameter
+            if table!=table_ref :
+                conn.close()
+                if not inmemory :
+                    os.remove(dbname)
+                raise Exception("%s not found" % table)
+        else:
             df = env[table]
             df = _ensure_data_frame(df, table)
             _write_table(table, df, conn)
