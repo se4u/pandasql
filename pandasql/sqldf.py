@@ -3,7 +3,7 @@ import sqlparse
 from sqlparse.tokens import Whitespace, Name
 import pandas as pd
 import numpy as np
-from pandas.io.sql import write_frame, frame_query
+from pandas.io.sql import write_frame, frame_query, execute
 import os
 import re
 
@@ -129,7 +129,17 @@ def sqldf(q, env, inmemory=True):
                     q=q.replace(table_ref+c_end,table+c_end)
 
     try:
-        result = frame_query(q, conn, params=env)
+        result = None
+        #we execute one sql instruction at a time
+        for q_single in sqlparse.split(q) :
+            #q_single can be any sql instruction, so frame_query don't fit 
+            cur = execute(q_single, conn, params=env)
+            rows = cur.fetchall()
+            if not isinstance(rows, list):
+                rows = list(rows)
+            if cur.description is not None: #q_single gave a query result
+                columns = [col_desc[0] for col_desc in cur.description]
+                result = pd.DataFrame(rows, columns=columns)
     except:
         result = None
     finally:

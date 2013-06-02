@@ -105,6 +105,13 @@ class PandaSQLTest(unittest.TestCase):
         result = sqldf("SELECT min(c0), sum(c1)  FROM :mylist", locals())
         self.assertEqual(result.values.tolist(), [['a', 3]])
 
+    def test_query_with_several_requests_and_internal_tables(self):
+        "several requests, using internal and external tables"
+        mylist = [ ('a',1), ('b',  2)]       
+        result = sqldf("""create table t_sql as SELECT sum(c1) c FROM :mylist;
+        select c, c+1 from t_sql""", locals())
+        self.assertEqual(result.values.tolist(), [[3, 4]])
+
 if __name__=="__main__":
     unittest.main()
 
