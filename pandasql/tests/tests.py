@@ -99,6 +99,12 @@ class PandaSQLTest(unittest.TestCase):
         result = sqldf("SELECT max(c0),sum(c1) FROM mylist", locals())
         self.assertEqual(result.values.tolist(), [['c', 6]])
 
+    def test_query_with_imported_table_as_parameters(self):
+        "use ':' prefix convention to specify a python table"
+        mylist = [ ('a',1), ('b',  2)]       
+        result = sqldf("SELECT min(c0), sum(c1)  FROM :mylist", locals())
+        self.assertEqual(result.values.tolist(), [['a', 3]])
+
 if __name__=="__main__":
     unittest.main()
 

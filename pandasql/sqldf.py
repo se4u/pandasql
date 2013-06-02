@@ -1,6 +1,6 @@
 import sqlite3 as sqlite
 import sqlparse
-from sqlparse.tokens import Whitespace
+from sqlparse.tokens import Whitespace, Name
 import pandas as pd
 import numpy as np
 from pandas.io.sql import write_frame, frame_query
@@ -55,7 +55,7 @@ def _extract_table_names(q):
                 next_is_table = True
             elif token.ttype is Whitespace:
                 continue
-            elif token.ttype is None and next_is_table:
+            elif (token.ttype is None or token.ttype is Name.Placeholder) and next_is_table:
                 tables.add(token.value)
                 next_is_table = False
     return list(tables)
@@ -109,7 +109,8 @@ def sqldf(q, env, inmemory=True):
         dbname = ".pandasql.db"
     conn = sqlite.connect(dbname, detect_types=sqlite.PARSE_DECLTYPES)
     tables = _extract_table_names(q)
-    for table in tables:
+    for table_ref in tables:
+        table=table_ref[0].replace(":","")+table_ref[1:]
         if table not in env:
             conn.close()
             if not inmemory :
@@ -119,6 +120,11 @@ def sqldf(q, env, inmemory=True):
             df = env[table]
             df = _ensure_data_frame(df, table)
             _write_table(table, df, conn)
+            #replace in query the 'table_ref' name per an acceptable name :
+            if table!=table_ref :
+                q+=" " #avoid end of sql corner case
+                for c_end in (";","\n",".",")","]"," ","--") :
+                    q=q.replace(table_ref+c_end,table+c_end)
 
     try:
         result = frame_query(q, conn, params=env)
