@@ -115,9 +115,10 @@ def sqldf(q, env, inmemory=True):
             if not inmemory :
                 os.remove(dbname)
             raise Exception("%s not found" % table)
-        df = env[table]
-        df = _ensure_data_frame(df, table)
-        _write_table(table, df, conn)
+        else :
+            df = env[table]
+            df = _ensure_data_frame(df, table)
+            _write_table(table, df, conn)
 
     try:
         result = frame_query(q, conn, params=env)
