@@ -112,6 +112,14 @@ class PandaSQLTest(unittest.TestCase):
         select c, c+1 from t_sql""", locals())
         self.assertEqual(result.values.tolist(), [[3, 4]])
 
+    def test_table_with_prefix_versus_whithout(self):
+        "t is different from :t"
+        t = [ ('a',1), ('b',  2)]       
+        result = sqldf("""drop table if exists t; -- compatibility need
+        create table t as SELECT min(c0) c0,sum(c1) c1 FROM :t;
+        select t.c1,:t.c1 from t inner join :t on t.c0=:t.c0""", {'t':t})
+        self.assertEqual(result.values.tolist(), [[3, 1]])
+
 if __name__=="__main__":
     unittest.main()
 

@@ -110,7 +110,10 @@ def sqldf(q, env, inmemory=True):
     conn = sqlite.connect(dbname, detect_types=sqlite.PARSE_DECLTYPES)
     tables = _extract_table_names(q)
     for table_ref in tables:
-        table=table_ref[0].replace(":","")+table_ref[1:]
+        table = table_sql = table_ref[0].replace(":","")+table_ref[1:]
+        if table != table_ref :
+            #we prefix also in sql prefix_imported python tables
+            table_sql="_tmp_pandasql_"+table
         if table not in env:
             #it's a fail only if the table was prefixed as a parameter
             if table!=table_ref :
@@ -120,13 +123,14 @@ def sqldf(q, env, inmemory=True):
                 raise Exception("%s not found" % table)
         else:
             df = env[table]
-            df = _ensure_data_frame(df, table)
-            _write_table(table, df, conn)
+            df = _ensure_data_frame(df, table_sql)
+            _write_table(table_sql, df, conn)
             #replace in query the 'table_ref' name per an acceptable name :
             if table!=table_ref :
                 q+=" " #avoid end of sql corner case
                 for c_end in (";","\n",".",")","]"," ","--") :
-                    q=q.replace(table_ref+c_end,table+c_end)
+                    q = q.replace(table_ref+c_end,table_sql+c_end)
+                q += " ;DROP TABLE IF EXISTS [%s] ;" % table_sql
 
     try:
         result = None
